@@ -7,68 +7,110 @@ use App\Models\Usuario;
 
 class UsuarioController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         //Obtener todos lo elementos de la tabla
         $usuario = Usuario::all();
-        return $usuario;
+        return response()->json($usuario);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         //
-        $usuario = new Usuario();
-        $usuario->login_usuario = $request->login_usuario;
-        $usuario->nombre = $request->nombre;
-        $usuario->apellidos = $request->apellidos;
-        $usuario->edad = $request->edad;
-        $usuario->telefono = $request->telefono;
-        $usuario->correo = $request->correo;
-        $usuario->direccion = $request->direccion;
-        $usuario->password = $request->password;
+        $rules = [
+            'login_usuario' => 'required|string|max:255',
+            'nombre' => 'required|string|min:1|max:100',
+            'apellidos' => 'required|string|min:1|max:100',
+            'edad' => 'required|numeric',
+            'telefono' => 'required|max:20',
+            'correo' => 'required|email|max:80|unique:usuarios,correo',
+            'direccion' => 'required|string|max:255',
+            'password' => 'required|string|max:255'
+        ];
 
-        $usuario->save();
+        $validacion = \Validator::make($request->input(), $rules);
+        if ($validacion->fails()) {
+            return response()->json([
+                'status' => false,
+                'errors' => $validacion->errors()->all()
+            ], 400);
+        }
+
+        try {
+            $usuario = new Usuario($request->except('password'));
+            $usuario->password = bcrypt($request->input('password'));
+            $usuario->save();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Usuario creado exitosamente'
+            ], 200);
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Error al crear el usuario',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show(Usuario $id)
     {
         //
+        return response()->json(['status' => true, 'data' => $id]);
     }
-
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
-        //
-        $usuario = Usuario:: findOrFail($id);
-        $usuario->login_usuario = $request->login_usuario;
-        $usuario->nombre = $request->nombre;
-        $usuario->apellidos = $request->apellidos;
-        $usuario->edad = $request->edad;
-        $usuario->telefono = $request->telefono;
-        $usuario->correo = $request->correo;
-        $usuario->direccion = $request->direccion;
-        $usuario->password = $request->password;
+        $rules = [
+            'login_usuario' => 'required|string|max:255',
+            'nombre' => 'required|string|min:1|max:100',
+            'apellidos' => 'required|string|min:1|max:100',
+            'edad' => 'required|numeric',
+            'telefono' => 'required|max:20',
+            'correo' => 'required|email|max:80|unique:usuarios,correo,' . $id,  
+            'direccion' => 'required|string|max:255',
+            'password' => 'nullable|string|max:255'  
+        ];
+
+        $validacion = \Validator::make($request->all(), $rules);
+        if ($validacion->fails()) {
+            return response()->json([
+                'status' => false,
+                'errors' => $validacion->errors()->all()
+            ], 400);
+        }
+
+        $usuario = Usuario::find($id);
+        if (!$usuario) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Usuario no encontrado'
+            ], 404);
+        }
+
+        $usuario->fill($request->except('password'));
+
+        if ($request->input('password')) {
+            $usuario->password = bcrypt($request->input('password'));
+        }
 
         $usuario->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Usuario modificado exitosamente'
+        ], 200);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
         //
         Usuario::destroy($id);
+        return response()->json([
+            'status' => true,
+            'message' => 'Usuario elimidado exitosamente'
+        ]);
     }
 }

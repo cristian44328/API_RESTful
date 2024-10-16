@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string("nombre");
             $table->string("apellidos");
             $table->string("edad");
-            $table->string("telefono", 8);
+            $table->string("telefono");
             $table->string("correo");
             $table->string("direccion");
             $table->string("password");
