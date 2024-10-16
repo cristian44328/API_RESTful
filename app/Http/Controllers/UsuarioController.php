@@ -47,7 +47,6 @@ class UsuarioController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-
             return response()->json([
                 'status' => false,
                 'message' => 'Error al crear el usuario',
@@ -69,9 +68,9 @@ class UsuarioController extends Controller
             'apellidos' => 'required|string|min:1|max:100',
             'edad' => 'required|numeric',
             'telefono' => 'required|max:20',
-            'correo' => 'required|email|max:80|unique:usuarios,correo,' . $id,  
+            'correo' => 'required|email|max:80|unique:usuarios,correo,' . $id,
             'direccion' => 'required|string|max:255',
-            'password' => 'nullable|string|max:255'  
+            'password' => 'nullable|string|max:255'
         ];
 
         $validacion = \Validator::make($request->all(), $rules);
@@ -107,10 +106,18 @@ class UsuarioController extends Controller
     public function destroy(string $id)
     {
         //
-        Usuario::destroy($id);
+        $usuario = Usuario::find($id);
+        if (!$usuario) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Usuario no encontrado'
+            ], 404);
+        }
+
+        $usuario->delete();
         return response()->json([
             'status' => true,
-            'message' => 'Usuario elimidado exitosamente'
-        ]);
+            'message' => 'Usuario eliminado exitosamente'
+        ], 200);
     }
 }
