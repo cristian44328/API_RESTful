@@ -49,10 +49,10 @@ class ProductoController extends Controller
         }
 
     }
-    public function show(Producto $id)
+    public function show(Producto $producto)
     {
         //
-        return response()->json(['status' => true, 'data' => $id]);
+        return response()->json(['status' => true, 'data' => $producto]);
     }
 
     public function update(Request $request, string $id)
